@@ -60,6 +60,25 @@ def get_grader_id(full_name):
     raise KeyError
 
 
+def search(name):
+    name = ' '.join(name.split()).replace('ي', 'ی').replace('ك', 'ک')
+    names = get_graders_name()
+    find = []
+    for i in range(len(names)):
+        if name in names[i][0]:
+            find.append(i)
+
+    if not find:
+        return bad_input_msg
+
+    output = '🔎%d مورد پیدا شد!' % len(find)
+    for i in find:
+        output += '\n%s: /grdr%d' % (names[i][0], i)
+
+    output += '\n.'
+    return output
+
+
 def handle(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if chat_type == u'private':
@@ -69,12 +88,20 @@ def handle(msg):
                 bot.sendMessage(chat_id, start_msg, reply_markup=keyboard_maker(get_graders_name()))
 
             else:
+                if msg['text'][:5] == '/grdr':
+                    try:
+                        index = int(msg['text'][5:])
+                        msg['text'] = get_graders_name()[index][0]
+                    except IndexError:
+                        bot.sendMessage(chat_id, bad_input_msg, reply_markup=keyboard_maker(get_graders_name()))
+                        return
+
                 try:
                     for grades in get_poll_results(get_grader_id(msg['text'])):
                         bot.sendMessage(chat_id, grades)
 
                 except KeyError:
-                    bot.sendMessage(chat_id, bad_input_msg, reply_markup=keyboard_maker(get_graders_name()))
+                    bot.sendMessage(chat_id, search(msg['text']), reply_markup=keyboard_maker(get_graders_name()))
 
 
 bot = telepot.Bot(TOKEN)
