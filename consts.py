@@ -9,5 +9,7 @@ bad_input_msg = '''
 و یا نام ایشان را از لیست پایین انتخاب کنید:
 '''
 
+not_found_msg = 'موردی پیدا نشد!'
+
 poll_result_api_url = 'http://cse-shirazu.ir/api/v1/qualification/result/cse-gradery/'
 graders_api_url = 'http://cse-shirazu.ir/api/v1/graders-with-qualification/'

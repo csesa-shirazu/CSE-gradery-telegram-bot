@@ -1,6 +1,7 @@
 import telepot
 from telepot.loop import MessageLoop
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
+from telepot.namedtuple import InlineQueryResultArticle, InputTextMessageContent
 import time
 import requests
 from config import *
@@ -79,7 +80,19 @@ def search(name):
     return output
 
 
-def handle(msg):
+def inline_search(name):
+    name = ' '.join(name.split()).replace('ي', 'ی').replace('ك', 'ک')
+    names = get_graders_name()
+
+    find = []
+    for this_name in names:
+        if name in this_name[0]:
+            find.append(this_name[0])
+
+    return find
+
+
+def on_chat_message(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if chat_type == u'private':
         if content_type == 'text':
@@ -104,9 +117,29 @@ def handle(msg):
                     bot.sendMessage(chat_id, search(msg['text']), reply_markup=keyboard_maker(get_graders_name()))
 
 
+def on_inline_query(msg):
+    query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
+    if not query_string:
+        return
+
+    found_names_list = inline_search(query_string)
+    if not found_names_list:
+        found_names_list = [not_found_msg]
+
+    found_names = [InlineQueryResultArticle(
+        id=name,
+        title=name,
+        input_message_content=InputTextMessageContent(
+            message_text=name
+        )) for name in found_names_list]
+
+    bot.answerInlineQuery(query_id, found_names)
+
+
 bot = telepot.Bot(TOKEN)
 
-MessageLoop(bot, handle).run_as_thread()
+MessageLoop(bot, {'chat': on_chat_message,
+                  'inline_query': on_inline_query}).run_as_thread()
 
 while True:
     time.sleep(30)
